@@ -474,7 +474,6 @@ inline void STLViewer::handleGLError(size_t ln) {
     err << (const char*)gluErrorString(ec) << " : " << ln;
 
     // Print info to stdout and throw an exception
-    //std::cout << err.str() << "\n";
     throw new std::runtime_error(err.str());
 }
 
@@ -482,8 +481,10 @@ bool STLViewer::openFile(QString fileName) {
     STLFile *newf;
     try {
         newf = new STLFile(fileName.toStdString());
-    } catch (...) {
-        newf = 0;
+    } catch (std::runtime_error re) {
+        QMessageBox::critical(this, tr("STL Viewer"),
+                           QString(re.what()));
+        return false;
     }
     if (newf) {
         if (stlf) {

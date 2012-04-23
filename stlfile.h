@@ -38,7 +38,11 @@ public:
     STLFile();
     STLFile(std::string fname);
     ~STLFile();
-    
+
+private:
+    void read_ascii_file(FILE *inf);
+    void read_binary_file(FILE *inf);
+
 private:
     tri_vect_t tris;
 };

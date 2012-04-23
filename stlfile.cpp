@@ -21,6 +21,7 @@
 #include <string>
 
 #include <cstdio>
+#include <cstring>
 #include <stdexcept>
 
 STLFile::STLFile(std::string fname) {
@@ -29,7 +30,17 @@ STLFile::STLFile(std::string fname) {
     if (inf == NULL) {
         throw std::runtime_error(std::string("Cannot open file ") + fname);
     }
-    
+    char buffer[80];
+    size_t bytes_read = fread(buffer, 1, 6, inf);
+    if (bytes_read != 6) {
+        throw std::runtime_error("Invalid STL file - could not read first 6 bytes.");
+    }
+    buffer[bytes_read] = '\0';
+    if (0 == std::memcmp(buffer, "solid ", 6)) {
+        read_ascii_file(inf);
+    } else {
+        read_binary_file(inf);
+    }
     std::fclose(inf);
 }
 
@@ -37,4 +48,13 @@ STLFile::STLFile() {
 }
 
 STLFile::~STLFile() {
+}
+
+void STLFile::read_ascii_file(FILE *inf) {
+    std::rewind(inf);
+    throw std::runtime_error("ASCII files not yet supported.");
+}
+
+void STLFile::read_binary_file(FILE *inf) {
+    std::rewind(inf);
 }
