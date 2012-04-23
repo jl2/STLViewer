@@ -1,0 +1,8 @@
+This is a simple STL file viewer.
+
+The initial version will simply display the model.
+
+Features I'd like to add in a later version:
+    Highlight facets with normals facing the wrong direction
+    View normal vectors
+    Fix invalid normals
