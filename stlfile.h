@@ -22,50 +22,13 @@
 #include <vector>
 #include <string>
 
-struct Vertex {
-    float x,y,z;
-};
-
 struct Triangle {
-    Vertex normal;
-    Vertex verts[3];
+    float normal[3];
+    float verts[3*3];
+    
     Triangle(float tr[12]) {
-        normal.x = tr[0];
-        normal.y = tr[1];
-        normal.z = tr[2];
-
-        verts[0].x = tr[3];
-        verts[0].y = tr[4];
-        verts[0].z = tr[5];
-
-        verts[1].x = tr[6];
-        verts[1].y = tr[7];
-        verts[1].z = tr[8];
-
-        verts[2].x = tr[9];
-        verts[2].y = tr[10];
-        verts[2].z = tr[11];
-    }
-    Triangle(float nx, float ny, float nz,
-             float v1x, float v1y, float v1z,
-             float v2x, float v2y, float v2z,
-             float v3x, float v3y, float v3z) {
-
-        normal.x = nx;
-        normal.y = ny;
-        normal.z = nz;
-
-        verts[0].x = v1x;
-        verts[0].y = v1y;
-        verts[0].z = v1z;
-
-        verts[1].x = v2x;
-        verts[1].y = v2y;
-        verts[1].z = v2z;
-
-        verts[2].x = v3x;
-        verts[2].y = v3y;
-        verts[2].z = v3z;
+        memcpy(normal, tr, sizeof(float)*3);
+        memcpy(verts, tr + 3, sizeof(float)*3*3);
     }
 };
 
@@ -76,15 +39,19 @@ public:
     STLFile();
     STLFile(std::string fname);
     ~STLFile();
-    void draw();
+    // void draw();
+    void fillBuffers(size_t max_tris, float *verts, float *norms, unsigned int *indices);
+    size_t getNumTris();
+    float getBoundingRadius();
 
 private:
     void read_ascii_file(FILE *inf);
     void read_binary_file(FILE *inf);
-
+    
 private:
     tri_vect_t tris;
     char header[80];
+    float most_extreme_point[3];
 };
 
 #endif

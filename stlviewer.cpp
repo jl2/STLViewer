@@ -27,7 +27,9 @@
   Initializes the object and sets the OpenGL format.
 */
 STLViewer::STLViewer(QWidget*) : stlf(new STLFile()), rotationX(0.0), rotationY(0.0),
-                                 rotationZ(0.0), translate(10.0) {
+                                 rotationZ(0.0), translate(250.0),
+                                 num_tris(0), verts(0), norms(0), indices(0)
+ {
     setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer));
 }
 
@@ -38,7 +40,18 @@ STLViewer::~STLViewer() {
     for (size_t i=1;i<NUM_LISTS; ++i) {
         glDeleteLists(dispLists[i], 1);
     }
-
+    if (verts) {
+        delete [] verts;
+        verts = 0;
+    }
+    if (norms) {
+        delete [] norms;
+        norms = 0;
+    }
+    if (indices) {
+        delete [] indices;
+        indices = 0;
+    }
     if (stlf) {
         delete stlf;
         stlf = 0;
@@ -50,71 +63,71 @@ STLViewer::~STLViewer() {
 */
 void STLViewer::initMaterials() {
     // lines
-    mat_specular[LINE_MAT][0]=0.0;
-    mat_specular[LINE_MAT][1]=0.0;
-    mat_specular[LINE_MAT][2]=0.0;
-    mat_specular[LINE_MAT][3]=1.0;
+    mat_specular[LINE_MAT][0]=0.0f;
+    mat_specular[LINE_MAT][1]=0.0f;
+    mat_specular[LINE_MAT][2]=0.0f;
+    mat_specular[LINE_MAT][3]=1.0f;
   
-    mat_shininess[LINE_MAT][0]=80.0;
+    mat_shininess[LINE_MAT][0]=80.0f;
 
-    mat_diffuse[LINE_MAT][0]=0.0;
-    mat_diffuse[LINE_MAT][1]=0.0;
-    mat_diffuse[LINE_MAT][2]=0.0;
-    mat_diffuse[LINE_MAT][3]=1.0;
+    mat_diffuse[LINE_MAT][0]=0.0f;
+    mat_diffuse[LINE_MAT][1]=0.0f;
+    mat_diffuse[LINE_MAT][2]=0.0f;
+    mat_diffuse[LINE_MAT][3]=1.0f;
   
-    mat_ambient[LINE_MAT][0] = 0.0;
-    mat_ambient[LINE_MAT][1] = 0.0;
-    mat_ambient[LINE_MAT][2] = 0.0;
-    mat_ambient[LINE_MAT][3] = 1.0;
+    mat_ambient[LINE_MAT][0] = 0.0f;
+    mat_ambient[LINE_MAT][1] = 0.0f;
+    mat_ambient[LINE_MAT][2] = 0.0f;
+    mat_ambient[LINE_MAT][3] = 1.0f;
 
     // closed spots
-    mat_specular[SURF_MAT][0]=1.0;
-    mat_specular[SURF_MAT][1]=0.125;
-    mat_specular[SURF_MAT][2]=0.125;
-    mat_specular[SURF_MAT][3]=1.0;
+    mat_specular[SURF_MAT][0]=1.0f;
+    mat_specular[SURF_MAT][1]=1.0f;
+    mat_specular[SURF_MAT][2]=1.0f;
+    mat_specular[SURF_MAT][3]=1.0f;
 
-    mat_shininess[SURF_MAT][0]=100.0;
+    mat_shininess[SURF_MAT][0]=100.0f;
   
-    mat_diffuse[SURF_MAT][0]=0.5;
-    mat_diffuse[SURF_MAT][1]=0.5;
-    mat_diffuse[SURF_MAT][2]=0.5;
-    mat_diffuse[SURF_MAT][3]=1.0;
+    mat_diffuse[SURF_MAT][0]=0.0f;
+    mat_diffuse[SURF_MAT][1]=0.0f;
+    mat_diffuse[SURF_MAT][2]=1.0f;
+    mat_diffuse[SURF_MAT][3]=1.0f;
   
-    mat_ambient[SURF_MAT][0] = 0.130;
-    mat_ambient[SURF_MAT][1] = 0.130;
-    mat_ambient[SURF_MAT][2] = 0.130;
-    mat_ambient[SURF_MAT][3] = 1.0;
+    mat_ambient[SURF_MAT][0] = 0.10f;
+    mat_ambient[SURF_MAT][1] = 0.10f;
+    mat_ambient[SURF_MAT][2] = 0.10f;
+    mat_ambient[SURF_MAT][3] = 1.0f;
 }
 
 /*!
   Initializes the light arrays
 */
 void STLViewer::initLights() {
-    light_position[0][0]=0.0;
-    light_position[0][1]=0.0;
-    light_position[0][2]=30.0;
-    light_position[0][3]=1.0;
+    light_position[0][0]=0.0f;
+    light_position[0][1]=0.0f;
+    light_position[0][2]=30.0f;
+    light_position[0][3]=1.0f;
   
-    light_position[1][0]=0.0;
-    light_position[1][1]=0.0;
-    light_position[1][2]=-30.0;
-    light_position[1][3]=1.0;
+    light_position[1][0]=0.0f;
+    light_position[1][1]=0.0f;
+    light_position[1][2]=-30.0f;
+    light_position[1][3]=1.0f;
   
     for (size_t i=0;i<NUM_LIGHTS; ++i) {
-        light_color[i][0]=1.0;
-        light_color[i][1]=1.0;
-        light_color[i][2]=1.0;
-        light_color[i][3]=1.0;
-        lmodel_ambient[i][0]=0.4;
-        lmodel_ambient[i][1]=0.4;
-        lmodel_ambient[i][2]=0.4;
-        lmodel_ambient[i][3]=1.0;
+        light_color[i][0]=1.0f;
+        light_color[i][1]=1.0f;
+        light_color[i][2]=1.0f;
+        light_color[i][3]=1.0f;
+        lmodel_ambient[i][0]=0.4f;
+        lmodel_ambient[i][1]=0.4f;
+        lmodel_ambient[i][2]=0.4f;
+        lmodel_ambient[i][3]=1.0f;
     }
 
-    glEnable(GL_LIGHTING);
+    // glEnable(GL_LIGHTING);
     
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
+    // glEnable(GL_LIGHT0);
+    // glEnable(GL_LIGHT1);
 }
 
 /*!
@@ -122,9 +135,9 @@ void STLViewer::initLights() {
 */
 void STLViewer::initLists() {
     dispLists[0] = glGenLists(1);
-    glNewList(dispLists[0], GL_COMPILE);
-    drawBoxList(1);
-    glEndList();
+    // glNewList(dispLists[0], GL_COMPILE);
+    // drawBoxList(1);
+    // glEndList();
 }
 
 void STLViewer::regenList() {
@@ -132,8 +145,49 @@ void STLViewer::regenList() {
     dispLists[0] = glGenLists(1);
     glNewList(dispLists[0], GL_COMPILE);
     if (stlf) {
-        stlf->draw();
+        if (verts) {
+            delete [] verts;
+            verts = 0;
+        }
+        if (norms) {
+            delete [] norms;
+            norms = 0;
+        }
+        if (indices) {
+            delete [] indices;
+            indices = 0;
+        }
+
+        num_tris = stlf->getNumTris();
+        qDebug() << "Num tris: " << num_tris;
+        verts = new float[num_tris*3*3];
+        norms = new float[num_tris*3*3];
+        indices = new unsigned int[num_tris*3];
+
+        stlf->fillBuffers(num_tris, verts, norms, indices);
+
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
+
+        glEnableClientState( GL_VERTEX_ARRAY);
+        // glEnableClientState(GL_NORMAL_ARRAY);
+
+        glVertexPointer( 3, GL_FLOAT, 0, verts );
+        // glNormalPointer( GL_FLOAT, 0, norms );
+        glColor3f(1.0,0.0,0.0);
+        glDrawElements( GL_TRIANGLES, 3*num_tris, GL_UNSIGNED_INT, indices);
+
+        glColor3f(0.0,0.0,0.0);
+        for (size_t i=0;i<num_tris;++i) {
+            glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices+3*i);
+        }
+
+        // glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_VERTEX_ARRAY);
     }
+
     glEndList();
 
 }
@@ -144,17 +198,17 @@ void STLViewer::initializeGL() {
     // Enable stuff
     qglClearColor(Qt::white);
   
-    glShadeModel(GL_FLAT);
+    glShadeModel(GL_SMOOTH);
     
-    glPolygonMode(GL_FRONT, GL_FILL);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     
     glEnable(GL_POLYGON_OFFSET_FILL);
     
     glEnable(GL_DEPTH_TEST);
     
-      glEnable(GL_LINE_SMOOTH);
+    glEnable(GL_LINE_SMOOTH);
     
-      glEnable(GL_BLEND);
+    glEnable(GL_BLEND);
     
     //   glBlendFunc(GL_ONE, GL_ZERO);
   
@@ -167,106 +221,6 @@ void STLViewer::initializeGL() {
 }
 
 /*!
-  Initializes a display list with the given material
-*/
-void STLViewer::drawBoxList(size_t mat_idx) {
-
-    // Draw the box
-    glBegin(GL_QUADS);
-  
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[mat_idx]);
-    //   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[mat_idx]);
-    //   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[mat_idx]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[mat_idx]);
-
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Top Right Of The Quad (Top)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Top Left Of The Quad (Top)
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Bottom Left Of The Quad (Top)
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Bottom Right Of The Quad (Top)
-
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Top Right Of The Quad (Bottom)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Top Left Of The Quad (Bottom)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Bottom Left Of The Quad (Bottom)
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Bottom Right Of The Quad (Bottom)
-
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Top Right Of The Quad (Front)
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Top Left Of The Quad (Front)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Bottom Left Of The Quad (Front)
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Bottom Right Of The Quad (Front)
-
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Top Right Of The Quad (Back)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Top Left Of The Quad (Back)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Bottom Left Of The Quad (Back)
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Bottom Right Of The Quad (Back)
-
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Top Right Of The Quad (Left)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Top Left Of The Quad (Left)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Bottom Left Of The Quad (Left)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Bottom Right Of The Quad (Left)
-
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Top Right Of The Quad (Right)
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Top Left Of The Quad (Right)
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Bottom Left Of The Quad (Right)
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Bottom
-    glEnd();
-  
-  
-    glLineWidth(2.0);
-  
-    // Draw the outline
-    glBegin(GL_LINE_LOOP);
-
-    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[LINE_MAT]);
-    //   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[LINE_MAT]);
-    //   glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[LINE_MAT]);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[LINE_MAT]);
-    
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Top Right Of The Quad (Top)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Top Left Of The Quad (Top)
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Bottom Left Of The Quad (Top)
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Bottom Right Of The Quad (Top)
-    glEnd();
-      
-    glBegin(GL_LINE_LOOP);
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Top Right Of The Quad (Bottom)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Top Left Of The Quad (Bottom)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Bottom Left Of The Quad (Bottom)
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Bottom Right Of The Quad (Bottom)
-    glEnd();
-      
-    glBegin(GL_LINE_LOOP);
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Top Right Of The Quad (Front)
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Top Left Of The Quad (Front)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Bottom Left Of The Quad (Front)
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Bottom Right Of The Quad (Front)
-    glEnd();
-      
-    glBegin(GL_LINE_LOOP);
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Top Right Of The Quad (Back)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Top Left Of The Quad (Back)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Bottom Left Of The Quad (Back)
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Bottom Right Of The Quad (Back)
-    glEnd();
-      
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(-0.5f, 0.5f, 0.5f);      // Top Right Of The Quad (Left)
-    glVertex3f(-0.5f, 0.5f,-0.5f);      // Top Left Of The Quad (Left)
-    glVertex3f(-0.5f,-0.5f,-0.5f);      // Bottom Left Of The Quad (Left)
-    glVertex3f(-0.5f,-0.5f, 0.5f);      // Bottom Right Of The Quad (Left)
-    glEnd();
-      
-    glBegin(GL_LINE_LOOP);
-    glVertex3f( 0.5f, 0.5f,-0.5f);      // Top Right Of The Quad (Right)
-    glVertex3f( 0.5f, 0.5f, 0.5f);      // Top Left Of The Quad (Right)
-    glVertex3f( 0.5f,-0.5f, 0.5f);      // Bottom Left Of The Quad (Right)
-    glVertex3f( 0.5f,-0.5f,-0.5f);      // Bottom
-    glEnd();
-    
-    glLineWidth(1.0);
-}
-
-
-/*!
   Called automatically when the window is rezied
 */
 void STLViewer::resizeGL(int width, int height) {
@@ -274,7 +228,7 @@ void STLViewer::resizeGL(int width, int height) {
   
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(80, 1.0, 1.0, 180);
+    gluPerspective(80, 1.0, 1.0, 1000);
     
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
@@ -382,15 +336,36 @@ void STLViewer::paintGL() {
     glLightfv(GL_LIGHT0, GL_DIFFUSE, light_color[0]);
     glLightfv(GL_LIGHT0, GL_SPECULAR, light_color[0]);
   
-    //   glLightfv(GL_LIGHT1, GL_POSITION, light_position[1]);
-    //   glLightfv(GL_LIGHT1, GL_DIFFUSE, light_color[1]);
-    //   glLightfv(GL_LIGHT1, GL_SPECULAR, light_color[1]);
+    glLightfv(GL_LIGHT1, GL_POSITION, light_position[1]);
+    glLightfv(GL_LIGHT1, GL_DIFFUSE, light_color[1]);
+    glLightfv(GL_LIGHT1, GL_SPECULAR, light_color[1]);
   
     glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient[0]);
     glLoadIdentity();
 
     if (stlf) {
         glLoadName(1);
+        // glEnableClientState( GL_VERTEX_ARRAY);
+        // glEnableClientState(GL_NORMAL_ARRAY);
+        // // glEnableClientState( GL_INDEX_ARRAY );
+ 
+        // // glIndexPointer( GL_UNSIGNED_INT, 0, indices );
+        // glVertexPointer( 3, GL_FLOAT, 0, verts );
+        // glNormalPointer( GL_FLOAT, 0, norms );
+        // // qDebug() << "Outputing triangle " << num_tris;
+        // // for (size_t i=0;i<num_tris;++i) {
+        // //     qDebug() << indices[3*i+0] << indices[3*i+1] << indices[3*i+2];
+        // // }
+        // glDrawElements( GL_TRIANGLES, num_tris, GL_UNSIGNED_INT, indices);
+
+        // // glDisableClientState(GL_INDEX_ARRAY);
+        // glDisableClientState(GL_NORMAL_ARRAY);
+        // glDisableClientState(GL_VERTEX_ARRAY);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
+
         glCallList(dispLists[0]);
     }
 
@@ -455,7 +430,7 @@ void STLViewer::mouseMoveEvent(QMouseEvent *event) {
 void STLViewer::wheelEvent(QWheelEvent *event) {
     translate += event->delta()*(-0.125*0.5*0.5);
   
-    if (translate<11.0) translate = 11.0;
+    if (translate<0.1) translate = 0.1;
     updateGL();
 }
 
@@ -463,10 +438,13 @@ void STLViewer::wheelEvent(QWheelEvent *event) {
   Reset the view to the original setting.
 */
 void STLViewer::resetView() {
-    translate=25;
-    rotationX = 27.2457;
-    rotationY = -46.44;
-    rotationZ = 0.0;
+    translate=10;
+    if (stlf) {
+        translate = 1.5*stlf->getBoundingRadius();
+    }
+    rotationX = 27.2457f;
+    rotationY = -46.44f;
+    rotationZ = 0.0f;
     updateGL();
 }
 
@@ -492,23 +470,24 @@ bool STLViewer::openFile(QString fileName) {
     try {
         newf = new STLFile(fileName.toStdString());
     } catch (std::runtime_error re) {
+        qDebug() << "Caught an exception";
         QMessageBox::critical(this, tr("STL Viewer"),
-                           QString(re.what()));
+                              QString(re.what()));
         return false;
     }
+    
     if (newf) {
+        qDebug() << "Got new stl file, replacing old one.";
         if (stlf) {
             delete stlf;
         }
         stlf = newf;
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
-
+        qDebug() << "Regenerating display list!";
         regenList();
-        updateGL();
+        resetView();
         return true;
+    } else {
+        qDebug() << "newf was NULL";
     }
     return false;
 }

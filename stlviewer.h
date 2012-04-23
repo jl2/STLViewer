@@ -104,4 +104,10 @@ private:
     GLfloat translate;
 
     bool clicked;
+    
+    size_t num_tris;
+    float *verts;
+    float *norms;
+    unsigned int *indices;
+
 };

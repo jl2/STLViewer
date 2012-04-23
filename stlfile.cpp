@@ -19,20 +19,12 @@
 #include "stlfile.h"
 
 #include <string>
-
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <stdexcept>
+
 #include <qdebug>
-
-#ifdef __APPLE_CC__
-#include <OpenGL/gl.h>
-#include <OpenGL/glu.h>
-#else
-#include <GL/gl.h>
-#include <GL/glu.h>
-#endif
-
 
 STLFile::STLFile(std::string fname) {
     // Because FILE* is easier to use than the C++ stuff
@@ -40,11 +32,13 @@ STLFile::STLFile(std::string fname) {
     if (inf == NULL) {
         throw std::runtime_error(std::string("Cannot open file ") + fname);
     }
+    
     char buffer[6];
     size_t bytes_read = fread(buffer, 1, 6, inf);
     if (bytes_read != 6) {
         throw std::runtime_error("Invalid STL file - could not read first 6 bytes.");
     }
+    std::rewind(inf);
     if (0 == std::memcmp(buffer, "solid ", 6)) {
         read_ascii_file(inf);
     } else {
@@ -60,12 +54,23 @@ STLFile::~STLFile() {
 }
 
 void STLFile::read_ascii_file(FILE *inf) {
-    std::rewind(inf);
+    fclose(inf);
     throw std::runtime_error("ASCII files not yet supported.");
 }
 
+void computeMostDistant(float *cur_vert, float *new_verts) {
+    double old_dist = cur_vert[0]*cur_vert[0] + cur_vert[1]*cur_vert[1] + cur_vert[2]*cur_vert[2];
+    for (size_t i=0;i<3; ++i) {
+        double new_dist = new_verts[3*i+0]*new_verts[3*i+0] + new_verts[3*i+1]*new_verts[3*i+1] + new_verts[3*i+2]*new_verts[3*i+2];
+        if (new_dist > old_dist) {
+            cur_vert[0] = new_verts[3*i+0];
+            cur_vert[1] = new_verts[3*i+1];
+            cur_vert[2] = new_verts[3*i+2];
+            old_dist = new_dist;
+        }
+    }
+}
 void STLFile::read_binary_file(FILE *inf) {
-    std::rewind(inf);
     char buffer[80];
     size_t num_read = fread(buffer, 1, 80, inf);
     if (num_read != 80) {
@@ -73,31 +78,52 @@ void STLFile::read_binary_file(FILE *inf) {
     }
     std::memcpy(header, buffer, 80);
 
-
     unsigned int num_tris = 0;
     num_read = std::fread(&num_tris, sizeof(unsigned int), 1, inf);
     if (num_read != 1) {
         throw std::runtime_error("Invalid binary STL file - could not read number of triangles from binary STL file.");
     }
-    qDebug() << "File contains " << num_tris << " triangles.";
+    most_extreme_point[0] = most_extreme_point[1] = most_extreme_point[2] = 0.0f;
+    
+    float next_tri[12];
     for (size_t i=0; i< num_tris; ++i) {
-        float next_tri[12];
-        fread(next_tri, 12, sizeof(float), inf);
+        num_read = fread(next_tri, sizeof(float), 12, inf);
+        if (num_read != 12) {
+            throw std::runtime_error("Could not read a full triangle.");
+        }
+        computeMostDistant(most_extreme_point, next_tri + 3);
         tris.push_back(Triangle(next_tri));
-        unsigned short whatever = 0;
-        fread(&whatever, 1, 2, inf);
-    }
-}
 
-void STLFile::draw() {
-    size_t num_tris = tris.size();
-    glBegin(GL_TRIANGLES);
-    for (size_t i=0; i<num_tris; ++i) {
-        for (size_t j=0; j<3; ++j) {
-            glVertex3f(tris[i].verts[j].x,
-                     tris[i].verts[j].y,
-                     tris[i].verts[j].z);
+        unsigned short whatever = 0;
+        num_read = fread(&whatever, 2, 1, inf);
+        if (num_read != 1) {
+            throw std::runtime_error("Could not read a full triangle.");
         }
     }
-    glEnd();
+    qDebug() << "Most extreme point: " << most_extreme_point[0] << most_extreme_point[1] << most_extreme_point[2];
+}
+
+size_t STLFile::getNumTris() {
+    return tris.size();
+}
+
+float STLFile::getBoundingRadius() {
+    return std::sqrt(most_extreme_point[0]*most_extreme_point[0] + most_extreme_point[1]*most_extreme_point[1] + most_extreme_point[2]*most_extreme_point[2]);
+}
+void STLFile::fillBuffers(size_t max_tris, float *verts, float *norms, unsigned int *indices) {
+
+    size_t nt = max_tris;
+    if (tris.size()<max_tris) {
+        nt = tris.size();
+    }
+    
+    for (size_t i=0; i<nt; ++i) {
+        memcpy(norms+(i+0)*3, tris[i].normal, sizeof(float)*3);
+        memcpy(norms+(i+1)*3, tris[i].normal, sizeof(float)*3);
+        memcpy(norms+(i+2)*3, tris[i].normal, sizeof(float)*3);
+        memcpy(verts+i*3*3, tris[i].verts, sizeof(float)*3*3);
+        indices[3*i + 0] = 3*i+0;
+        indices[3*i + 1] = 3*i+1;
+        indices[3*i + 2] = 3*i+2;
+    }
 }
