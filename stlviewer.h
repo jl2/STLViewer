@@ -20,8 +20,13 @@
 #include <QtOpenGL>
 #include <QGLWidget>
 
+#ifdef __APPLE_CC__
+#include <OpenGL/gl.h>
+#include <OpenGL/glu.h>
+#else
 #include <GL/gl.h>
 #include <GL/glu.h>
+#endif
 
 #include "stlfile.h"
 
