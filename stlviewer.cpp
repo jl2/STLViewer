@@ -127,6 +127,16 @@ void STLViewer::initLists() {
     glEndList();
 }
 
+void STLViewer::regenList() {
+    glDeleteLists(dispLists[0], 1);
+    dispLists[0] = glGenLists(1);
+    glNewList(dispLists[0], GL_COMPILE);
+    if (stlf) {
+        stlf->draw();
+    }
+    glEndList();
+
+}
 /*!
   Initializes OpenGL by enabling required features and loading materials/lights/display lists
 */
@@ -491,6 +501,7 @@ bool STLViewer::openFile(QString fileName) {
             delete stlf;
         }
         stlf = newf;
+        regenList();
         updateGL();
         return true;
     }

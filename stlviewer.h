@@ -68,6 +68,8 @@ private:
     void initMaterials();
     void initLights();
     void initLists();
+    void regenList();
+    
     void drawBoxList(size_t mat_idx);
 
     // Error handler for OpenGL errors
