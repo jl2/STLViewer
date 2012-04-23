@@ -152,9 +152,9 @@ void STLViewer::initializeGL() {
     
     glEnable(GL_DEPTH_TEST);
     
-    //   glEnable(GL_LINE_SMOOTH);
+      glEnable(GL_LINE_SMOOTH);
     
-    //   glEnable(GL_BLEND);
+      glEnable(GL_BLEND);
     
     //   glBlendFunc(GL_ONE, GL_ZERO);
   
@@ -501,6 +501,11 @@ bool STLViewer::openFile(QString fileName) {
             delete stlf;
         }
         stlf = newf;
+        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
+        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
+
         regenList();
         updateGL();
         return true;
