@@ -51,6 +51,9 @@ public:
 
     bool openFile(QString fileName);
 
+    void setShowPolygons(bool show);
+    void setShowFacets(bool show);
+
 protected:
     void initializeGL();
     void resizeGL(int width, int height);
@@ -110,4 +113,6 @@ private:
     float *norms;
     unsigned int *indices;
 
+    bool showPolygons;
+    bool showFacets;
 };

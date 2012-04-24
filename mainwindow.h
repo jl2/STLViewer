@@ -46,6 +46,8 @@ private slots:
     void about();
     void resetView();
     void updateStatusBar(QString fileName);
+    void toggleFacets();
+    void togglePolygons();
 
 protected:
     // Initialization functions
@@ -62,7 +64,10 @@ private:
     QAction *aboutQtAction;
     QAction *quitAction;
     QAction *resetViewAction;
-  
+
+    QAction *showFacetsAction;
+    QAction *showPolygonsAction;
+
     QToolBar *theToolbar;
   
     QMenu *fileMenu;
@@ -76,7 +81,8 @@ private:
     STLViewer *stl;
 
     bool promptExit;
-
+    bool showingFacets;
+    bool showingPolygons;
 };
 
 #endif

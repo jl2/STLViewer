@@ -28,13 +28,11 @@
 /*!
   Performs initialization
 */
-MainWindow::MainWindow() : QMainWindow() {
+MainWindow::MainWindow() : QMainWindow(), promptExit(true), showingFacets(true), showingPolygons(true) {
   
     // Create STLViewer widget
     stl = new STLViewer(this);
   
-    promptExit = true;
-
     qset = new QSettings(QSettings::IniFormat, QSettings::UserScope,
                          "STLViewer", "STLViewer");
 
@@ -108,6 +106,18 @@ void MainWindow::createActions() {
     resetViewAction->setShortcut(tr("Ctrl+V"));
     resetViewAction->setStatusTip(tr("Reset the view"));
     connect(resetViewAction, SIGNAL(triggered()), this, SLOT(resetView()));
+    
+    showFacetsAction = new QAction(tr("Show Facets"), this);
+    showFacetsAction->setStatusTip(tr("Show facet outlines."));
+    showFacetsAction->setCheckable(true);
+    showFacetsAction->setChecked(showingFacets);
+    connect(showFacetsAction, SIGNAL(triggered()), this, SLOT(toggleFacets()));
+    
+    showPolygonsAction = new QAction(tr("Show Polygons"), this);
+    showPolygonsAction->setStatusTip(tr("Fill facets."));
+    showPolygonsAction->setCheckable(true);
+    showPolygonsAction->setChecked(showingPolygons);
+    connect(showPolygonsAction, SIGNAL(triggered()), this, SLOT(togglePolygons()));
 }
 
 /*!
@@ -124,6 +134,8 @@ void MainWindow::createMenus() {
 
     // Options menu
     optionsMenu = menuBar()->addMenu(tr("&Options"));
+    optionsMenu->addAction(showPolygonsAction);
+    optionsMenu->addAction(showFacetsAction);
 
     // Help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
@@ -209,4 +221,17 @@ void MainWindow::readSettings() {
     // qset->value("whatever", default_int_value).toInt();
     // qset->value("whatever", default_string_value).toString();
     // qset->value("whatever", QDateTime(2012, 4,2)).toDateTime();
+}
+
+void MainWindow::toggleFacets() {
+    showingFacets = !showingFacets;
+    if (stl) {
+        stl->setShowFacets(showingFacets);
+    }
+}
+void MainWindow::togglePolygons() {
+    showingPolygons = !showingPolygons;
+    if (stl) {
+        stl->setShowPolygons(showingPolygons);
+    }
 }

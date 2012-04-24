@@ -28,7 +28,7 @@
 */
 STLViewer::STLViewer(QWidget*) : stlf(new STLFile()), rotationX(0.0), rotationY(0.0),
                                  rotationZ(0.0), translate(250.0),
-                                 num_tris(0), verts(0), norms(0), indices(0)
+                                 num_tris(0), verts(0), norms(0), indices(0), showPolygons(true), showFacets(true)
  {
     setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer));
 }
@@ -124,10 +124,10 @@ void STLViewer::initLights() {
         lmodel_ambient[i][3]=1.0f;
     }
 
-    // glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHTING);
     
-    // glEnable(GL_LIGHT0);
-    // glEnable(GL_LIGHT1);
+    glEnable(GL_LIGHT0);
+    glEnable(GL_LIGHT1);
 }
 
 /*!
@@ -142,8 +142,12 @@ void STLViewer::initLists() {
 
 void STLViewer::regenList() {
     glDeleteLists(dispLists[0], 1);
+    glDeleteLists(dispLists[1], 1);
+
     dispLists[0] = glGenLists(1);
-    glNewList(dispLists[0], GL_COMPILE);
+    dispLists[1] = glGenLists(1);
+    
+    
     if (stlf) {
         if (verts) {
             delete [] verts;
@@ -166,29 +170,27 @@ void STLViewer::regenList() {
 
         stlf->fillBuffers(num_tris, verts, norms, indices);
 
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
 
         glEnableClientState( GL_VERTEX_ARRAY);
-        // glEnableClientState(GL_NORMAL_ARRAY);
+        glEnableClientState(GL_NORMAL_ARRAY);
+        glNewList(dispLists[0], GL_COMPILE);        
+
 
         glVertexPointer( 3, GL_FLOAT, 0, verts );
-        // glNormalPointer( GL_FLOAT, 0, norms );
+        glNormalPointer( GL_FLOAT, 0, norms );
         glColor3f(1.0,0.0,0.0);
         glDrawElements( GL_TRIANGLES, 3*num_tris, GL_UNSIGNED_INT, indices);
+        glEndList();
 
-        glColor3f(0.0,0.0,0.0);
+        glNewList(dispLists[1], GL_COMPILE);
         for (size_t i=0;i<num_tris;++i) {
             glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices+3*i);
         }
+        glEndList();
 
-        // glDisableClientState(GL_NORMAL_ARRAY);
+        glDisableClientState(GL_NORMAL_ARRAY);
         glDisableClientState(GL_VERTEX_ARRAY);
     }
-
-    glEndList();
 
 }
 /*!
@@ -319,7 +321,7 @@ void STLViewer::paintGL() {
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     
-    glTranslatef(0.0,0.0,-(translate+5));
+    glTranslatef(0.0,0.0,-translate);
     glRotatef(rotationX, 1.0, 0.0, 0.0);
     glRotatef(rotationY, 0.0, 1.0, 0.0);
     glRotatef(rotationZ, 0.0, 0.0, 1.0);
@@ -330,6 +332,19 @@ void STLViewer::paintGL() {
   
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    
+    if (stlf) {
+        light_position[0][0]=1.5*stlf->getBoundingRadius();
+        light_position[0][1]=1.5*stlf->getBoundingRadius();
+        light_position[0][2]=1.5*stlf->getBoundingRadius();
+        
+        light_position[1][0]=1.5*stlf->getBoundingRadius();
+        light_position[1][1]=1.5*stlf->getBoundingRadius();
+        light_position[1][2]=-1.5*stlf->getBoundingRadius();
+    }
+    light_position[0][3]=1.0f;
+    light_position[1][3]=1.0f;
 
     // Setup the lights
     glLightfv(GL_LIGHT0, GL_POSITION, light_position[0]);
@@ -361,12 +376,22 @@ void STLViewer::paintGL() {
         // // glDisableClientState(GL_INDEX_ARRAY);
         // glDisableClientState(GL_NORMAL_ARRAY);
         // glDisableClientState(GL_VERTEX_ARRAY);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
-        glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
+        if (showPolygons) {
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[SURF_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[SURF_MAT]);
 
-        glCallList(dispLists[0]);
+            glCallList(dispLists[0]);
+        }
+        if (showFacets) {
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[LINE_MAT]);
+
+            glCallList(dispLists[1]);
+        }
     }
 
     // Reset to how we found things
@@ -428,9 +453,17 @@ void STLViewer::mouseMoveEvent(QMouseEvent *event) {
   Handle zooming
 */
 void STLViewer::wheelEvent(QWheelEvent *event) {
-    translate += event->delta()*(-0.125*0.5*0.5);
-  
-    if (translate<0.1) translate = 0.1;
+    double dz= -0.125*0.25;
+    double minz = 0.125;
+    if (stlf) {
+        dz = -0.125*stlf->getBoundingRadius();
+        minz = 1.125*stlf->getBoundingRadius();
+    }
+    translate += event->delta()*dz;
+
+    if (translate<minz) {
+        translate = minz;
+    }
     updateGL();
 }
 
@@ -490,4 +523,12 @@ bool STLViewer::openFile(QString fileName) {
         qDebug() << "newf was NULL";
     }
     return false;
+}
+void STLViewer::setShowPolygons(bool show) {
+    showPolygons = show;
+    updateGL();
+}
+void STLViewer::setShowFacets(bool show) {
+    showFacets = show;
+    updateGL();
 }
