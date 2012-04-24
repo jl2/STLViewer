@@ -21,14 +21,14 @@
 
 #include <vector>
 #include <string>
-
+#include <cstring>
 struct Triangle {
     float normal[3];
     float verts[3*3];
     
     Triangle(float tr[12]) {
-        memcpy(normal, tr, sizeof(float)*3);
-        memcpy(verts, tr + 3, sizeof(float)*3*3);
+        std::memcpy(normal, tr, sizeof(float)*3);
+        std::memcpy(verts, tr + 3, sizeof(float)*3*3);
     }
 };
 

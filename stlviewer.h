@@ -33,7 +33,7 @@
 // Some constants...
 static const size_t NUM_MATERIALS=2;
 static const size_t NUM_LIGHTS=2;
-static const size_t NUM_LISTS=1;
+static const size_t NUM_LISTS=2;
 static const size_t LINE_MAT=0;
 static const size_t SURF_MAT=1;
 
@@ -77,7 +77,8 @@ private:
 
     // Error handler for OpenGL errors
     void handleGLError(size_t ln);
-  
+
+    float calculateMinimumZoom();
     // Arrays to hold material properties
     GLfloat mat_specular[NUM_MATERIALS][4];
     GLfloat mat_shininess[NUM_MATERIALS][1];

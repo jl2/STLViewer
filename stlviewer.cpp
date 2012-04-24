@@ -17,6 +17,7 @@
 */
 
 #include <QMainWindow>
+#include <QDebug>
 
 #include <sstream>
 #include <stdexcept>
@@ -178,10 +179,10 @@ void STLViewer::regenList() {
 
         glVertexPointer( 3, GL_FLOAT, 0, verts );
         glNormalPointer( GL_FLOAT, 0, norms );
-        glColor3f(1.0,0.0,0.0);
         glDrawElements( GL_TRIANGLES, 3*num_tris, GL_UNSIGNED_INT, indices);
         glEndList();
 
+        
         glNewList(dispLists[1], GL_COMPILE);
         for (size_t i=0;i<num_tris;++i) {
             glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices+3*i);
@@ -335,13 +336,14 @@ void STLViewer::paintGL() {
 
     
     if (stlf) {
-        light_position[0][0]=1.5*stlf->getBoundingRadius();
-        light_position[0][1]=1.5*stlf->getBoundingRadius();
-        light_position[0][2]=1.5*stlf->getBoundingRadius();
+        float minz = calculateMinimumZoom();
+        light_position[0][0]=2.0*minz;
+        light_position[0][1]=2.0*minz;
+        light_position[0][2]=2.0*minz;
         
-        light_position[1][0]=1.5*stlf->getBoundingRadius();
-        light_position[1][1]=1.5*stlf->getBoundingRadius();
-        light_position[1][2]=-1.5*stlf->getBoundingRadius();
+        light_position[1][0]=2.0*minz;
+        light_position[1][1]=2.0*minz;
+        light_position[1][2]=-2.0*minz;
     }
     light_position[0][3]=1.0f;
     light_position[1][3]=1.0f;
@@ -360,22 +362,7 @@ void STLViewer::paintGL() {
 
     if (stlf) {
         glLoadName(1);
-        // glEnableClientState( GL_VERTEX_ARRAY);
-        // glEnableClientState(GL_NORMAL_ARRAY);
-        // // glEnableClientState( GL_INDEX_ARRAY );
- 
-        // // glIndexPointer( GL_UNSIGNED_INT, 0, indices );
-        // glVertexPointer( 3, GL_FLOAT, 0, verts );
-        // glNormalPointer( GL_FLOAT, 0, norms );
-        // // qDebug() << "Outputing triangle " << num_tris;
-        // // for (size_t i=0;i<num_tris;++i) {
-        // //     qDebug() << indices[3*i+0] << indices[3*i+1] << indices[3*i+2];
-        // // }
-        // glDrawElements( GL_TRIANGLES, num_tris, GL_UNSIGNED_INT, indices);
-
-        // // glDisableClientState(GL_INDEX_ARRAY);
-        // glDisableClientState(GL_NORMAL_ARRAY);
-        // glDisableClientState(GL_VERTEX_ARRAY);
+        // TODO: See about reusing the display list by changing the polygon fill mode.
         if (showPolygons) {
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[SURF_MAT]);
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[SURF_MAT]);
@@ -384,6 +371,7 @@ void STLViewer::paintGL() {
 
             glCallList(dispLists[0]);
         }
+        
         if (showFacets) {
             glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[LINE_MAT]);
             glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[LINE_MAT]);
@@ -449,16 +437,20 @@ void STLViewer::mouseMoveEvent(QMouseEvent *event) {
     lastPos = event->pos();
 }
 
+float STLViewer::calculateMinimumZoom() {
+    double minz = 0.125;
+    if (stlf) {
+        minz = 1.25f*stlf->getBoundingRadius();
+    }
+    return minz;
+}
 /*!
   Handle zooming
 */
 void STLViewer::wheelEvent(QWheelEvent *event) {
-    double dz= -0.125*0.25;
-    double minz = 0.125;
-    if (stlf) {
-        dz = -0.125*stlf->getBoundingRadius();
-        minz = 1.125*stlf->getBoundingRadius();
-    }
+
+    double minz = calculateMinimumZoom();
+    double dz= -0.125*0.25*0.25 * minz;
     translate += event->delta()*dz;
 
     if (translate<minz) {
@@ -471,10 +463,7 @@ void STLViewer::wheelEvent(QWheelEvent *event) {
   Reset the view to the original setting.
 */
 void STLViewer::resetView() {
-    translate=10;
-    if (stlf) {
-        translate = 1.5*stlf->getBoundingRadius();
-    }
+    translate = calculateMinimumZoom();
     rotationX = 27.2457f;
     rotationY = -46.44f;
     rotationZ = 0.0f;

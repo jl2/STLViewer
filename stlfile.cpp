@@ -24,7 +24,7 @@
 #include <cstring>
 #include <stdexcept>
 
-#include <qdebug>
+#include <QDebug>
 
 STLFile::STLFile(std::string fname) {
     // Because FILE* is easier to use than the C++ stuff
@@ -108,7 +108,9 @@ size_t STLFile::getNumTris() {
 }
 
 float STLFile::getBoundingRadius() {
-    return std::sqrt(most_extreme_point[0]*most_extreme_point[0] + most_extreme_point[1]*most_extreme_point[1] + most_extreme_point[2]*most_extreme_point[2]);
+    return 1.1*std::sqrt(most_extreme_point[0]*most_extreme_point[0] +
+                         most_extreme_point[1]*most_extreme_point[1] +
+                         most_extreme_point[2]*most_extreme_point[2]);
 }
 void STLFile::fillBuffers(size_t max_tris, float *verts, float *norms, unsigned int *indices) {
 
@@ -118,9 +120,10 @@ void STLFile::fillBuffers(size_t max_tris, float *verts, float *norms, unsigned 
     }
     
     for (size_t i=0; i<nt; ++i) {
-        memcpy(norms+(i+0)*3, tris[i].normal, sizeof(float)*3);
-        memcpy(norms+(i+1)*3, tris[i].normal, sizeof(float)*3);
-        memcpy(norms+(i+2)*3, tris[i].normal, sizeof(float)*3);
+        memcpy(norms + 3*(3*i+0), tris[i].normal, sizeof(float)*3);
+        memcpy(norms + 3*(3*i+1), tris[i].normal, sizeof(float)*3);
+        memcpy(norms + 3*(3*i+2), tris[i].normal, sizeof(float)*3);
+
         memcpy(verts+i*3*3, tris[i].verts, sizeof(float)*3*3);
         indices[3*i + 0] = 3*i+0;
         indices[3*i + 1] = 3*i+1;
