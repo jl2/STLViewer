@@ -6,7 +6,6 @@ vertex 1.0e0 0.0e0 0.0e0
 vertex 0.0e0 1.0e0 0.0e0
 endloop
 endfacet
-
 facet normal 0.0e0 -1.0e0 0.0e0
 outer loop
 vertex 0.0e0 0.0e0 0.0e0
@@ -14,7 +13,6 @@ vertex 1.0e0 0.0e0 0.0e0
 vertex 0.0e0 0.0e0 1.0e0
 endloop
 endfacet
-
 facet normal -1.0e0 0.0e0 0.0e0
 outer loop
 vertex 0.0e0 0.0e0 0.0e0
@@ -22,7 +20,6 @@ vertex 0.0e0 1.0e0 0.0e0
 vertex 0.0e0 0.0e0 1.0e0
 endloop
 endfacet
-
 facet normal 5.773502691896258e-1 5.773502691896258e-1 5.773502691896258e-1
 outer loop
 vertex 1.0e0 0.0e0 0.0e0
@@ -30,3 +27,4 @@ vertex 0.0e0 1.0e0 0.0e0
 vertex 0.0e0 0.0e0 1.0e0
 endloop
 endfacet
+endsolid
