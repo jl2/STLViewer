@@ -22,10 +22,15 @@
 #include <cmath>
 #include <cstdio>
 #include <cstring>
+
+#include <cstdlib>
+
 #include <stdexcept>
 
 #include <QDebug>
 
+void computeMostDistant(float *cur_vert, float *new_verts);
+    
 STLFile::STLFile(std::string fname) {
     // Because FILE* is easier to use than the C++ stuff
     FILE *inf = std::fopen(fname.c_str(), "rb");
@@ -53,9 +58,64 @@ STLFile::STLFile() {
 STLFile::~STLFile() {
 }
 
+void read_vert_from_line(const char *buffer, const char *prefix, float *verts) {
+    size_t preLen = strlen(prefix);
+    size_t off = 0;
+    while (buffer[off] == ' ' || buffer[off]=='\t') ++off;
+    
+    if (0 != std::memcmp(off+buffer, prefix, preLen-1)) {
+        throw std::runtime_error(buffer);
+    }
+    const char *tmp = (char*)buffer+preLen+off+1;
+    char *end;
+    verts[0] = strtof(tmp, &end);
+    verts[1] = strtof(end+1, &end);
+    verts[2] = strtof(end+1, &end);
+}
+
 void STLFile::read_ascii_file(FILE *inf) {
+    char buffer[256] = {'\0'};
+    char *rval = 0;
+
+    rval = fgets(buffer, 255, inf);
+    if (rval == NULL) {
+        throw std::runtime_error("Could not read first line of ASCII file.");
+    }
+
+    most_extreme_point[0] = most_extreme_point[1] = most_extreme_point[2] = 0.0f;
+    rval = fgets(buffer, 255, inf);
+
+    while (0 != std::memcmp(buffer, "endsolid", 8)) {
+
+        float next_tri[12];
+        read_vert_from_line(buffer, "facet normal", next_tri);
+
+        // Read and ingore "outer loop"
+        rval = fgets(buffer, 255, inf);
+
+        // Read vertices
+        rval = fgets(buffer, 255, inf);
+        read_vert_from_line(buffer, "vertex ", next_tri+3);
+        
+        rval = fgets(buffer, 255, inf);
+        read_vert_from_line(buffer, "vertex ", next_tri+6);
+        
+        rval = fgets(buffer, 255, inf);
+        read_vert_from_line(buffer, "vertex ", next_tri+9);
+
+        computeMostDistant(most_extreme_point, next_tri + 3);
+        tris.push_back(Triangle(next_tri));
+
+        // Read and ingore "endloop"
+        rval = fgets(buffer, 255, inf);
+
+        // Read and ignore "endfacet"
+        rval = fgets(buffer, 255, inf);
+
+        // Read first line of next triangle or "endsolid"
+        rval = fgets(buffer, 255, inf);
+    }
     fclose(inf);
-    throw std::runtime_error("ASCII files not yet supported.");
 }
 
 void computeMostDistant(float *cur_vert, float *new_verts) {

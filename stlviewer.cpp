@@ -492,6 +492,7 @@ bool STLViewer::openFile(QString fileName) {
     try {
         newf = new STLFile(fileName.toStdString());
     } catch (std::runtime_error re) {
+        newf = 0;
         qDebug() << "Caught an exception";
         QMessageBox::critical(this, tr("STL Viewer"),
                               QString(re.what()));
