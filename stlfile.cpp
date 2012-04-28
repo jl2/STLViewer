@@ -115,7 +115,6 @@ void STLFile::read_ascii_file(FILE *inf) {
         // Read first line of next triangle or "endsolid"
         rval = fgets(buffer, 255, inf);
     }
-    fclose(inf);
 }
 
 void computeMostDistant(float *cur_vert, float *new_verts) {
