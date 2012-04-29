@@ -29,9 +29,10 @@
 */
 STLViewer::STLViewer(QWidget*) : stlf(new STLFile()), rotationX(0.0), rotationY(0.0),
                                  rotationZ(0.0), translate(250.0),
-                                 num_tris(0), verts(0), norms(0), indices(0), showPolygons(true), showFacets(true)
- {
-    setFormat(QGLFormat(QGL::DoubleBuffer | QGL::DepthBuffer));
+                                 num_tris(0), verts(0), norms(0), indices(0), showPolygons(true), showFacets(true) {
+    QGLFormat theFormat(QGL::DoubleBuffer | QGL::DepthBuffer | QGL::SampleBuffers);
+    theFormat.setSamples(2);
+    setFormat(theFormat);
 }
 
 /*!
@@ -184,6 +185,7 @@ void STLViewer::regenList() {
 
         
         glNewList(dispLists[1], GL_COMPILE);
+        glLineWidth(2.0);
         for (size_t i=0;i<num_tris;++i) {
             glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices+3*i);
         }
