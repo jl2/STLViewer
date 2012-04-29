@@ -90,7 +90,7 @@ void STLFile::read_ascii_file(FILE *inf) {
         float next_tri[12];
         read_vert_from_line(buffer, "facet normal", next_tri);
 
-        // Read and ingore "outer loop"
+        // Read and ignore "outer loop"
         rval = fgets(buffer, 255, inf);
 
         // Read vertices
