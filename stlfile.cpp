@@ -27,8 +27,6 @@
 
 #include <stdexcept>
 
-#include <QDebug>
-
 void computeMostDistant(float *cur_vert, float *new_verts);
     
 STLFile::STLFile(std::string fname) {
@@ -67,10 +65,11 @@ void read_vert_from_line(const char *buffer, const char *prefix, float *verts) {
         throw std::runtime_error(buffer);
     }
     const char *tmp = (char*)buffer+preLen+off+1;
+
     char *end;
     verts[0] = strtof(tmp, &end);
-    verts[1] = strtof(end+1, &end);
-    verts[2] = strtof(end+1, &end);
+    verts[1] = strtof(end, &end);
+    verts[2] = strtof(end, &end);
 }
 
 void STLFile::read_ascii_file(FILE *inf) {
@@ -95,13 +94,13 @@ void STLFile::read_ascii_file(FILE *inf) {
 
         // Read vertices
         rval = fgets(buffer, 255, inf);
-        read_vert_from_line(buffer, "vertex ", next_tri+3);
+        read_vert_from_line(buffer, "vertex", next_tri+3);
         
         rval = fgets(buffer, 255, inf);
-        read_vert_from_line(buffer, "vertex ", next_tri+6);
+        read_vert_from_line(buffer, "vertex", next_tri+6);
         
         rval = fgets(buffer, 255, inf);
-        read_vert_from_line(buffer, "vertex ", next_tri+9);
+        read_vert_from_line(buffer, "vertex", next_tri+9);
 
         computeMostDistant(most_extreme_point, next_tri + 3);
         tris.push_back(Triangle(next_tri));
@@ -159,7 +158,6 @@ void STLFile::read_binary_file(FILE *inf) {
             throw std::runtime_error("Could not read a full triangle.");
         }
     }
-    qDebug() << "Most extreme point: " << most_extreme_point[0] << most_extreme_point[1] << most_extreme_point[2];
 }
 
 size_t STLFile::getNumTris() {

@@ -17,7 +17,6 @@
 */
 
 #include <QMainWindow>
-#include <QDebug>
 
 #include <sstream>
 #include <stdexcept>
@@ -165,7 +164,6 @@ void STLViewer::regenList() {
         }
 
         num_tris = stlf->getNumTris();
-        qDebug() << "Num tris: " << num_tris;
         verts = new float[num_tris*3*3];
         norms = new float[num_tris*3*3];
         indices = new unsigned int[num_tris*3];
@@ -495,24 +493,21 @@ bool STLViewer::openFile(QString fileName) {
         newf = new STLFile(fileName.toStdString());
     } catch (std::runtime_error re) {
         newf = 0;
-        qDebug() << "Caught an exception";
         QMessageBox::critical(this, tr("STL Viewer"),
                               QString(re.what()));
         return false;
     }
     
     if (newf) {
-        qDebug() << "Got new stl file, replacing old one.";
         if (stlf) {
             delete stlf;
         }
         stlf = newf;
-        qDebug() << "Regenerating display list!";
         regenList();
         resetView();
         return true;
     } else {
-        qDebug() << "newf was NULL";
+        ;
     }
     return false;
 }
