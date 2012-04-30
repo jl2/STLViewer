@@ -67,9 +67,10 @@ void read_vert_from_line(const char *buffer, const char *prefix, float *verts) {
     const char *tmp = (char*)buffer+preLen+off+1;
 
     char *end;
-    verts[0] = strtof(tmp, &end);
-    verts[1] = strtof(end, &end);
-    verts[2] = strtof(end, &end);
+    // This should be strtof, but msvc++ is stupid and doesn't support it
+    verts[0] = float(std::strtod(tmp, &end));
+    verts[1] = float(std::strtod(tmp, &end));
+    verts[2] = float(std::strtod(tmp, &end));
 }
 
 void STLFile::read_ascii_file(FILE *inf) {
@@ -165,7 +166,7 @@ size_t STLFile::getNumTris() {
 }
 
 float STLFile::getBoundingRadius() {
-    return 1.1*std::sqrt(most_extreme_point[0]*most_extreme_point[0] +
+    return 1.1f*std::sqrt(most_extreme_point[0]*most_extreme_point[0] +
                          most_extreme_point[1]*most_extreme_point[1] +
                          most_extreme_point[2]*most_extreme_point[2]);
 }
