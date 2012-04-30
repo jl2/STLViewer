@@ -69,8 +69,8 @@ void read_vert_from_line(const char *buffer, const char *prefix, float *verts) {
     char *end;
     // This should be strtof, but msvc++ is stupid and doesn't support it
     verts[0] = float(std::strtod(tmp, &end));
-    verts[1] = float(std::strtod(tmp, &end));
-    verts[2] = float(std::strtod(tmp, &end));
+    verts[1] = float(std::strtod(end, &end));
+    verts[2] = float(std::strtod(end, &end));
 }
 
 void STLFile::read_ascii_file(FILE *inf) {
