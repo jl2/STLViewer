@@ -28,7 +28,7 @@
 /*!
   Performs initialization
 */
-MainWindow::MainWindow() : QMainWindow(), promptExit(true), showingFacets(true), showingPolygons(true) {
+MainWindow::MainWindow() : QMainWindow(), promptExit(true), showingFacets(true), showingPolygons(true), showingNormals(true) {
   
     // Create STLViewer widget
     stl = new STLViewer(this);
@@ -118,6 +118,12 @@ void MainWindow::createActions() {
     showPolygonsAction->setCheckable(true);
     showPolygonsAction->setChecked(showingPolygons);
     connect(showPolygonsAction, SIGNAL(triggered()), this, SLOT(togglePolygons()));
+
+    showNormalsAction = new QAction(tr("Show Normals"), this);
+    showNormalsAction->setStatusTip(tr("Show facet normal vectors."));
+    showNormalsAction->setCheckable(true);
+    showNormalsAction->setChecked(showingNormals);
+    connect(showNormalsAction, SIGNAL(triggered()), this, SLOT(toggleNormals()));
 }
 
 /*!
@@ -136,6 +142,7 @@ void MainWindow::createMenus() {
     optionsMenu = menuBar()->addMenu(tr("&Options"));
     optionsMenu->addAction(showPolygonsAction);
     optionsMenu->addAction(showFacetsAction);
+    optionsMenu->addAction(showNormalsAction);
 
     // Help menu
     helpMenu = menuBar()->addMenu(tr("&Help"));
@@ -233,5 +240,11 @@ void MainWindow::togglePolygons() {
     showingPolygons = !showingPolygons;
     if (stl) {
         stl->setShowPolygons(showingPolygons);
+    }
+}
+void MainWindow::toggleNormals() {
+    showingNormals = !showingNormals;
+    if (stl) {
+        stl->setShowNormals(showingNormals);
     }
 }

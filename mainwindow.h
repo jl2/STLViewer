@@ -48,6 +48,7 @@ private slots:
     void updateStatusBar(QString fileName);
     void toggleFacets();
     void togglePolygons();
+    void toggleNormals();
 
 protected:
     // Initialization functions
@@ -67,6 +68,7 @@ private:
 
     QAction *showFacetsAction;
     QAction *showPolygonsAction;
+    QAction *showNormalsAction;
 
     QToolBar *theToolbar;
   
@@ -83,6 +85,7 @@ private:
     bool promptExit;
     bool showingFacets;
     bool showingPolygons;
+    bool showingNormals;
 };
 
 #endif

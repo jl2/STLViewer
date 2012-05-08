@@ -23,12 +23,33 @@
 
 #include "stlviewer.h"
 
+void cross(const float a[3], const float b[3], float res[3]) {
+    /*
+    i      j    k
+    a[0] a[1] a[2]
+    b[0] b[1] b[2]
+    */
+    res[0] = a[1] * b[2] - a[2]*b[1];
+    res[1] =  a[2]*b[0] - a[0]*b[2];
+    res[2] = a[0]*b[1] - a[1] * b[0];
+}
+float length(float a[3]) {
+    return sqrt(a[0]*a[0] + a[1]*a[1] + a[2]*a[2]);
+}
+void normalize(float a[3]) {
+    float len = length(a);
+    if (fabs(len)>0.001) {
+        a[0] /= len;
+        a[1] /= len;
+        a[2] /= len;
+    }
+}
 /*!
   Initializes the object and sets the OpenGL format.
 */
 STLViewer::STLViewer(QWidget*) : stlf(new STLFile()), rotationX(0.0), rotationY(0.0),
                                  rotationZ(0.0), translate(250.0),
-                                 num_tris(0), verts(0), norms(0), indices(0), showPolygons(true), showFacets(true) {
+                                 num_tris(0), verts(0), norms(0), indices(0), showPolygons(true), showFacets(true), showNorms(true) {
     QGLFormat theFormat(QGL::DoubleBuffer | QGL::DepthBuffer | QGL::SampleBuffers);
     theFormat.setSamples(2);
     setFormat(theFormat);
@@ -144,9 +165,11 @@ void STLViewer::initLists() {
 void STLViewer::regenList() {
     glDeleteLists(dispLists[0], 1);
     glDeleteLists(dispLists[1], 1);
+    glDeleteLists(dispLists[2], 1);
 
     dispLists[0] = glGenLists(1);
     dispLists[1] = glGenLists(1);
+    dispLists[2] = glGenLists(1);
     
     
     if (stlf) {
@@ -183,9 +206,62 @@ void STLViewer::regenList() {
 
         
         glNewList(dispLists[1], GL_COMPILE);
-        glLineWidth(2.0);
+        glLineWidth(1.5);
         for (size_t i=0;i<num_tris;++i) {
             glDrawElements( GL_LINE_LOOP, 3, GL_UNSIGNED_INT, indices+3*i);
+        }
+        glEndList();
+
+
+        glNewList(dispLists[2], GL_COMPILE);
+        glLineWidth(1.0);
+        float ot = 1.0/3.0;
+        
+        float nVerts[6] = {0.0f};
+        int lineIdx[2] = {0, 1};
+        for (size_t i=0;i<3*num_tris;++i) {
+            nVerts[0] =
+                ot * verts[3*(i+0)] +
+                ot * verts[3*(i+1)] +
+                ot * verts[3*(i+2)];
+            nVerts[1] =
+                ot * verts[3*(i+0)+1] +
+                ot * verts[3*(i+1)+1] +
+                ot * verts[3*(i+2)+1];
+            nVerts[2] =
+                ot * verts[3*(i+0)+2] +
+                ot * verts[3*(i+1)+2] +
+                ot * verts[3*(i+2)+2];
+
+            float p1[3] = {verts[3*(i+1)+0] - verts[3*i+0],
+                           verts[3*(i+1)+1] - verts[3*i+1],
+                           verts[3*(i+1)+2] - verts[3*i+2]};
+
+            float p2[3] = {verts[3*(i+2)+0] - verts[3*(i+1)+0],
+                           verts[3*(i+2)+1] - verts[3*(i+1)+1],
+                           verts[3*(i+2)+2] - verts[3*(i+1)+2]};
+                           
+            float res[3];
+            normalize(p1);
+            normalize(p2);
+            cross(p1,p2, res);
+            // normalize(res);
+                
+            // nVerts[3] = nVerts[0] + ot*norms[3*(3*i+0)];
+            // nVerts[4] = nVerts[1] + ot*norms[3*(3*i+1)];
+            // nVerts[5] = nVerts[2] + ot*norms[3*(3*i+2)];
+            nVerts[3] = nVerts[0] + ot*res[0];
+            nVerts[4] = nVerts[1] + ot*res[1];
+            nVerts[5] = nVerts[2] + ot*res[2];
+            
+            // qDebug() << nVerts[0] << nVerts[1] << nVerts[2] << " to "
+            //          << nVerts[3] << nVerts[4] << nVerts[5];
+            // nVerts[3] = 0.0f;
+            // nVerts[4] = 0.0f;
+            // nVerts[5] = 0.0f;
+
+            glVertexPointer( 3, GL_FLOAT, 0, nVerts );
+            glDrawElements( GL_LINES, 2, GL_UNSIGNED_INT, lineIdx);
         }
         glEndList();
 
@@ -380,6 +456,14 @@ void STLViewer::paintGL() {
 
             glCallList(dispLists[1]);
         }
+        if (showNorms) {
+            glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mat_diffuse[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess[LINE_MAT]);
+            glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, mat_ambient[LINE_MAT]);
+
+            glCallList(dispLists[2]);
+        }
     }
 
     // Reset to how we found things
@@ -517,5 +601,9 @@ void STLViewer::setShowPolygons(bool show) {
 }
 void STLViewer::setShowFacets(bool show) {
     showFacets = show;
+    updateGL();
+}
+void STLViewer::setShowNormals(bool show) {
+    showNorms = show;
     updateGL();
 }

@@ -33,7 +33,7 @@
 // Some constants...
 static const size_t NUM_MATERIALS=2;
 static const size_t NUM_LIGHTS=2;
-static const size_t NUM_LISTS=2;
+static const size_t NUM_LISTS=3;
 static const size_t LINE_MAT=0;
 static const size_t SURF_MAT=1;
 
@@ -53,6 +53,7 @@ public:
 
     void setShowPolygons(bool show);
     void setShowFacets(bool show);
+    void setShowNormals(bool show);
 
 protected:
     void initializeGL();
@@ -116,4 +117,5 @@ private:
 
     bool showPolygons;
     bool showFacets;
+    bool showNorms;
 };
